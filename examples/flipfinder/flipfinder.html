@@ -1,0 +1,493 @@
+<title>FlipFinder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+:root {
+  --paper: #f6f1e8; --surface: #ffffff; --ink: #1f1b16; --ink-muted: #5e554a; --rule: #d9cfbf;
+  --brick: #a63d1c; --on-brick: #ffffff; --sawdust: #e9d9bc; --deal-green: #2e6b3f; --on-green: #ffffff;
+  --distress-amber: #b7791f; --on-amber: #1f1b16;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --space-1: 4px; --space-2: 8px; --space-4: 16px; --space-6: 24px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-full: 9999px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1a1713; --surface: #24201b; --ink: #f3ece3; --ink-muted: #b3a898; --rule: #3d362e;
+    --brick: #d0643f; --on-brick: #1a1713; --sawdust: #3a3024; --deal-green: #6fbf85; --on-green: #10200f;
+    --distress-amber: #d99a3a; --on-amber: #1a1713;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1a1713; --surface: #24201b; --ink: #f3ece3; --ink-muted: #b3a898; --rule: #3d362e;
+  --brick: #d0643f; --on-brick: #1a1713; --sawdust: #3a3024; --deal-green: #6fbf85; --on-green: #10200f;
+  --distress-amber: #d99a3a; --on-amber: #1a1713;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/22px var(--font-sans); padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: var(--space-6); }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); padding-block: var(--space-6) 0; }
+.brand { font: 800 32px/1 var(--font-display); letter-spacing: -0.5px; margin: 0; }
+.brand span { color: var(--brick); }
+.lede { margin: 0; color: var(--ink-muted); max-width: 62ch; }
+.num, .figure { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.label { font: 600 12px/16px var(--font-sans); letter-spacing: .6px; text-transform: uppercase; color: var(--ink-muted); }
+.muted { color: var(--ink-muted); }
+.small { font-size: 13px; line-height: 18px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); }
+.stat { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-md); padding: var(--space-4); display: grid; gap: var(--space-1); }
+.stat .v { font: 800 32px/36px var(--font-display); font-variant-numeric: tabular-nums; }
+.stat .v.good { color: var(--deal-green); }
+
+.bar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+button, .btn { font: 600 14px/20px var(--font-sans); border-radius: var(--radius-md); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); padding: 7px 14px; cursor: pointer; }
+button:hover { border-color: var(--ink-muted); }
+button.primary { background: var(--brick); border-color: var(--brick); color: var(--on-brick); }
+button:disabled { opacity: .55; cursor: default; }
+:focus-visible { outline: 2px solid var(--brick); outline-offset: 2px; }
+input[type="number"], input[type="text"], select, textarea { font: 14px/20px var(--font-sans); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 6px 8px; }
+input[type="number"] { width: 90px; font-family: var(--font-mono); }
+.chip { font: 600 12px/16px var(--font-sans); letter-spacing: .4px; border-radius: var(--radius-full); padding: 5px 10px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--sawdust); border-color: var(--ink-muted); }
+.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-md); }
+.panel > summary { padding: var(--space-2) var(--space-4); cursor: pointer; font-weight: 600; }
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); padding: 0 var(--space-4) var(--space-4); }
+.settings label { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); font-size: 14px; }
+.import { display: grid; gap: var(--space-2); padding: 0 var(--space-4) var(--space-4); }
+.import textarea { width: 100%; min-height: 110px; font-family: var(--font-mono); font-size: 12px; }
+.note { background: var(--sawdust); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: 13px; line-height: 18px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-md); }
+table { width: 100%; border-collapse: collapse; min-width: 620px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 12px/16px var(--font-sans); letter-spacing: .6px; text-transform: uppercase; color: var(--ink-muted); white-space: nowrap; }
+td.r, th.r { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: color-mix(in srgb, var(--sawdust) 45%, transparent); }
+tbody tr[aria-selected="true"] { background: var(--sawdust); }
+.addr { font-weight: 600; }
+.pill { display: inline-block; min-width: 44px; text-align: center; border-radius: var(--radius-full); padding: 2px 10px; font: 500 14px/20px var(--font-mono); }
+.pill.strong { background: var(--deal-green); color: var(--on-green); }
+.pill.look { background: var(--sawdust); color: var(--ink); }
+.pill.pass { background: var(--surface); color: var(--ink-muted); border: 1px solid var(--rule); }
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.tag { font: 600 11px/15px var(--font-sans); letter-spacing: .5px; text-transform: uppercase; background: var(--distress-amber); color: var(--on-amber); border-radius: var(--radius-sm); padding: 2px 6px; }
+.tag.listed { background: var(--surface); color: var(--ink-muted); border: 1px solid var(--rule); }
+.pos { color: var(--deal-green); }
+
+.detail { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-md); padding: var(--space-4); display: grid; gap: var(--space-4); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.detail h2 { font: 700 24px/30px var(--font-display); margin: 0; text-wrap: balance; }
+.detail h3 { font: 700 16px/22px var(--font-display); margin: 0 0 var(--space-2); }
+.math { display: grid; grid-template-columns: 1fr auto; gap: 4px var(--space-4); margin: 0; }
+.math dt { color: var(--ink-muted); font-size: 14px; }
+.math dd { margin: 0; text-align: right; }
+.math .sum { border-top: 1px solid var(--rule); padding-top: 4px; font-weight: 600; color: var(--ink); }
+.scorebars { display: grid; gap: var(--space-2); }
+.sb { display: grid; grid-template-columns: 96px 1fr 52px; gap: var(--space-2); align-items: center; font-size: 13px; }
+.sb .track { height: 8px; background: var(--paper); border-radius: var(--radius-full); overflow: hidden; }
+.sb .fill { height: 100%; background: var(--ink-muted); }
+.ai-out { white-space: pre-wrap; background: var(--paper); border-radius: var(--radius-sm); padding: var(--space-4); font-size: 14px; line-height: 21px; max-height: 420px; overflow: auto; }
+.empty { padding: var(--space-6); text-align: center; color: var(--ink-muted); }
+footer { color: var(--ink-muted); font-size: 13px; line-height: 18px; max-width: 80ch; }
+@media (prefers-reduced-motion: no-preference) { tbody tr { transition: background .12s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 class="brand">Flip<span>Finder</span></h1>
+      <p class="lede">Import a property list, and FlipFinder ranks every off-market house by distress, equity and room for a profitable flip.</p>
+    </div>
+    <span class="label" id="dataset-label">Sample data</span>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><span class="label">Leads scored</span><span class="v" id="st-leads">0</span><span class="small muted" id="st-leads-sub"></span></div>
+    <div class="stat"><span class="label">Strong deals (80+)</span><span class="v good" id="st-strong">0</span><span class="small muted">Score 80 to 100</span></div>
+    <div class="stat"><span class="label">Median score</span><span class="v" id="st-median">0</span><span class="small muted">Out of 100</span></div>
+    <div class="stat"><span class="label">Projected spread, top 10</span><span class="v good" id="st-spread">$0</span><span class="small muted">If bought at max offer</span></div>
+  </section>
+
+  <details class="panel" id="import-panel">
+    <summary>Import leads (CSV)</summary>
+    <div class="import">
+      <p class="small muted" style="margin:0">Use an export from your county treasurer (tax-delinquent list), code-enforcement records, a probate or lis-pendens list, a driving-for-dollars sheet, or a list tool like PropStream. Columns are matched by name; anything missing is left blank. Recognized columns: <span class="figure">address, city, zip, owner, mailing_address, sqft, beds, baths, year_built, arv, assessed_value, mortgage_balance, last_sale_date, tax_delinquent_years, code_violations, pre_foreclosure, probate, vacant, condition (1–5), listed, notes</span>.</p>
+      <div class="bar">
+        <input type="file" id="file" accept=".csv,text/csv">
+        <button type="button" id="btn-template">Copy blank template</button>
+        <button type="button" id="btn-sample">Reload sample data</button>
+      </div>
+      <label class="small" for="paste">Or paste CSV text</label>
+      <textarea id="paste" placeholder="address,city,zip,sqft,arv,mortgage_balance,tax_delinquent_years,vacant&#10;1418 Alder St,Mesa,85201,1350,265000,40000,2,yes"></textarea>
+      <div class="bar"><button type="button" class="primary" id="btn-paste">Score pasted leads</button><span class="small muted" id="import-msg" role="status"></span></div>
+    </div>
+  </details>
+
+  <details class="panel">
+    <summary>Deal assumptions</summary>
+    <div class="settings">
+      <label for="s-mao">Max offer, % of ARV <input type="number" id="s-mao" value="70" min="40" max="90" step="1"></label>
+      <label for="s-cost">Closing + holding, % of ARV <input type="number" id="s-cost" value="10" min="0" max="30" step="1"></label>
+      <label for="s-psf">Area ARV, $ per sq ft <input type="number" id="s-psf" value="195" min="20" step="5"></label>
+      <label for="s-r1">Rehab $/sq ft, condition 1 (gut) <input type="number" id="s-r1" value="60" min="0" step="1"></label>
+      <label for="s-r2">Rehab $/sq ft, condition 2 <input type="number" id="s-r2" value="42" min="0" step="1"></label>
+      <label for="s-r3">Rehab $/sq ft, condition 3 <input type="number" id="s-r3" value="28" min="0" step="1"></label>
+      <label for="s-r4">Rehab $/sq ft, condition 4 <input type="number" id="s-r4" value="16" min="0" step="1"></label>
+      <label for="s-r5">Rehab $/sq ft, condition 5 (cosmetic) <input type="number" id="s-r5" value="8" min="0" step="1"></label>
+    </div>
+    <p class="small muted" style="margin:0;padding:0 16px 16px">The area ARV rate is used only when a row has no <span class="figure">arv</span> column. Houses built before 1960 add 15% to rehab for systems (electrical, plumbing, roof).</p>
+  </details>
+
+  <div class="bar" role="group" aria-label="Filters">
+    <span class="label">Filter</span>
+    <button type="button" class="chip" data-sig="tax" aria-pressed="false">Tax-delinquent</button>
+    <button type="button" class="chip" data-sig="code" aria-pressed="false">Code violation</button>
+    <button type="button" class="chip" data-sig="nod" aria-pressed="false">Pre-foreclosure</button>
+    <button type="button" class="chip" data-sig="probate" aria-pressed="false">Probate</button>
+    <button type="button" class="chip" data-sig="vacant" aria-pressed="false">Vacant</button>
+    <button type="button" class="chip" data-sig="absentee" aria-pressed="false">Absentee owner</button>
+    <label class="chk" for="f-min">Min score <input type="number" id="f-min" value="0" min="0" max="100" step="5" style="width:70px"></label>
+    <label class="chk"><input type="checkbox" id="f-offmarket" checked> Off-market only</label>
+    <span style="flex:1"></span>
+    <button type="button" id="btn-export">Export ranked CSV</button>
+    <button type="button" class="primary" id="btn-brief">AI: brief me on the top 10</button>
+  </div>
+  <div class="ai-out" id="brief" hidden></div>
+
+  <div class="main">
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Score</th><th>Property</th><th>Signals</th><th class="r">ARV</th><th class="r">Max offer</th><th class="r">Equity</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden>No leads match these filters.</div>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+
+  <footer>
+    FlipFinder does not fetch records itself: it scores the lists you import. Every figure is an estimate from your inputs; verify ARV with sold comps and rehab with a walkthrough before making an offer. Before contacting owners, scrub numbers against the National Do Not Call Registry, get consent before texting or auto-dialing (TCPA), follow your state's wholesaling and disclosure rules, and treat owners in hardship with respect.
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, el = document) => el.querySelector(s);
+  const money = (n) => (n == null || !isFinite(n)) ? "—" : (n < 0 ? "−$" : "$") + Math.round(Math.abs(n)).toLocaleString("en-US");
+  const kmoney = (n) => (n == null || !isFinite(n)) ? "—" : (n < 0 ? "−$" : "$") + (Math.abs(n) >= 1e6 ? (Math.abs(n) / 1e6).toFixed(2) + "M" : Math.round(Math.abs(n) / 1000) + "k");
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  const SAMPLE = `address,city,zip,owner,mailing_address,sqft,beds,baths,year_built,arv,assessed_value,mortgage_balance,last_sale_date,tax_delinquent_years,code_violations,pre_foreclosure,probate,vacant,condition,listed,notes
+1418 Alder St,Mesa,85201,Sample Owner A,"PO Box 88, Tucson AZ",1350,3,2,1958,265000,188000,0,1994-06-01,3,2,no,yes,yes,1,no,Roof tarped; overgrown yard
+722 W Pine Ave,Mesa,85210,Sample Owner B,722 W Pine Ave,1620,4,2,1972,318000,240000,212000,2019-03-15,1,0,yes,no,no,3,no,Notice of default filed last month
+3305 E Cactus Rd,Phoenix,85032,Sample Owner C,"1200 Lake Dr, Denver CO",1180,3,1,1964,255000,170000,35000,2003-10-20,2,1,no,no,yes,2,no,Boarded windows
+59 N Ocotillo Ln,Chandler,85225,Sample Owner D,59 N Ocotillo Ln,1900,4,3,1998,420000,350000,310000,2021-08-02,0,0,no,no,no,4,yes,Listed on MLS at 435k
+2811 S Juniper St,Tempe,85282,Sample Owner E,"44 Harbor Way, San Diego CA",1450,3,2,1961,338000,230000,60000,1988-01-10,0,3,no,no,yes,2,no,Code case: junk vehicles and pool
+914 E Birch Ave,Phoenix,85014,Sample Owner F,914 E Birch Ave,1100,2,1,1949,248000,160000,0,1979-05-05,4,0,no,yes,no,2,no,Heirs out of state
+6120 W Mesquite Dr,Glendale,85304,Sample Owner G,6120 W Mesquite Dr,1750,4,2,1985,352000,280000,198000,2015-11-30,0,0,no,no,no,4,no,
+407 S Palo Verde St,Mesa,85204,Sample Owner H,"9 Elm Ct, Boise ID",1280,3,2,1968,,190000,20000,1999-07-19,1,1,no,no,yes,2,no,Tenant moved out; utilities off
+1733 N Saguaro Blvd,Phoenix,85008,Sample Owner I,1733 N Saguaro Blvd,1520,3,2,1977,305000,215000,265000,2022-02-14,0,0,yes,no,no,3,no,Owes more than it is worth
+250 E Mariposa St,Tempe,85281,Sample Owner J,250 E Mariposa St,1050,2,1,1955,289000,190000,15000,1990-09-09,2,0,no,no,no,3,no,Long-time owner; deferred maintenance
+8840 N Ironwood Way,Peoria,85345,Sample Owner K,"300 Pine St, Seattle WA",2050,4,2,1994,405000,300000,120000,2006-04-04,0,1,no,no,yes,3,no,Vacant 14 months per USPS
+1560 W Cholla St,Phoenix,85029,Sample Owner L,1560 W Cholla St,1400,3,2,1970,292000,210000,70000,2001-12-12,0,0,no,no,no,5,no,Recently updated kitchen`;
+
+  // ---------- CSV ----------
+  function parseCSV(text) {
+    const rows = []; let row = [], f = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(f); f = ""; if (row.some((v) => v.trim() !== "")) rows.push(row); row = [];
+      } else f += c;
+    }
+    row.push(f); if (row.some((v) => v.trim() !== "")) rows.push(row);
+    return rows;
+  }
+  const csvCell = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+  const ALIASES = {
+    address: ["address", "property_address", "situs_address", "site_address", "street", "property address"],
+    city: ["city", "property_city", "situs_city"], zip: ["zip", "zipcode", "zip_code", "postal_code"],
+    owner: ["owner", "owner_name", "owner name"], mailing_address: ["mailing_address", "owner_mailing", "mailing address", "mail_address"],
+    sqft: ["sqft", "square_feet", "living_area", "building_sqft", "sq_ft"], beds: ["beds", "bedrooms"], baths: ["baths", "bathrooms"],
+    year_built: ["year_built", "yearbuilt", "year built"], arv: ["arv", "after_repair_value", "est_arv"],
+    assessed_value: ["assessed_value", "est_value", "estimated_value", "market_value", "avm", "value"],
+    mortgage_balance: ["mortgage_balance", "loan_balance", "open_mortgage", "est_mortgage_balance", "liens"],
+    last_sale_date: ["last_sale_date", "sale_date", "last_sold"],
+    tax_delinquent_years: ["tax_delinquent_years", "tax_delinquent", "years_delinquent", "delinquent_years"],
+    code_violations: ["code_violations", "violations", "code_cases"], pre_foreclosure: ["pre_foreclosure", "preforeclosure", "nod", "lis_pendens", "notice_of_default"],
+    probate: ["probate", "estate", "deceased_owner"], vacant: ["vacant", "vacancy", "is_vacant"],
+    condition: ["condition", "condition_score"], listed: ["listed", "on_market", "mls_listed", "active_listing"], notes: ["notes", "comments", "remarks"]
+  };
+  function mapHeader(h) {
+    const k = h.trim().toLowerCase().replace(/[\s-]+/g, "_");
+    for (const [field, names] of Object.entries(ALIASES)) if (names.some((n) => n.replace(/[\s-]+/g, "_") === k)) return field;
+    return null;
+  }
+  const num = (v) => { if (v == null) return null; const n = parseFloat(String(v).replace(/[$,\s]/g, "")); return isFinite(n) ? n : null; };
+  const yes = (v) => /^(y|yes|true|1|x)$/i.test(String(v ?? "").trim()) || (/\d{4}-\d{2}/.test(String(v ?? "")));
+  function condVal(v) {
+    const n = num(v); if (n != null) return Math.min(5, Math.max(1, Math.round(n)));
+    const s = String(v ?? "").toLowerCase();
+    if (/gut|very poor|uninhabit/.test(s)) return 1; if (/poor|heavy/.test(s)) return 2;
+    if (/fair|average/.test(s)) return 3; if (/good/.test(s)) return 4; if (/excellent|updated/.test(s)) return 5;
+    return null;
+  }
+
+  function toLeads(text) {
+    const rows = parseCSV(text.trim());
+    if (rows.length < 2) throw new Error("Need a header row and at least one data row.");
+    const map = rows[0].map(mapHeader);
+    if (!map.includes("address")) throw new Error("No address column found. Name one column \"address\".");
+    return rows.slice(1).map((r, i) => {
+      const o = {}; map.forEach((f, j) => { if (f) o[f] = (r[j] ?? "").trim(); });
+      const tdy = num(o.tax_delinquent_years) ?? (yes(o.tax_delinquent_years) ? 1 : 0);
+      return {
+        id: i, address: o.address || "(no address)", city: o.city || "", zip: o.zip || "", owner: o.owner || "", mailing: o.mailing_address || "",
+        sqft: num(o.sqft), beds: num(o.beds), baths: num(o.baths), year: num(o.year_built), arvIn: num(o.arv), assessed: num(o.assessed_value),
+        mortgage: num(o.mortgage_balance) ?? 0, lastSale: o.last_sale_date || "", taxYears: tdy, violations: num(o.code_violations) ?? (yes(o.code_violations) ? 1 : 0),
+        nod: yes(o.pre_foreclosure), probate: yes(o.probate), vacant: yes(o.vacant), condition: condVal(o.condition), listed: yes(o.listed), notes: o.notes || ""
+      };
+    }).filter((l) => l.address !== "(no address)");
+  }
+
+  // ---------- scoring ----------
+  const S = () => ({
+    mao: (num($("#s-mao").value) ?? 70) / 100, cost: (num($("#s-cost").value) ?? 10) / 100, psf: num($("#s-psf").value) ?? 195,
+    rehab: [0, num($("#s-r1").value) ?? 60, num($("#s-r2").value) ?? 42, num($("#s-r3").value) ?? 28, num($("#s-r4").value) ?? 16, num($("#s-r5").value) ?? 8]
+  });
+  function normAddr(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12); }
+
+  function score(l, s) {
+    const signals = [];
+    const absentee = !!l.mailing && normAddr(l.mailing) !== normAddr(l.address);
+    const yearsOwned = l.lastSale ? (Date.now() - new Date(l.lastSale).getTime()) / 3.156e10 : null;
+    if (l.taxYears > 0) signals.push({ k: "tax", t: `Tax-delinquent ${l.taxYears} yr${l.taxYears > 1 ? "s" : ""}`, p: Math.min(18, 10 + 3 * l.taxYears) });
+    if (l.violations > 0) signals.push({ k: "code", t: `${l.violations} code violation${l.violations > 1 ? "s" : ""}`, p: Math.min(14, 6 * l.violations) });
+    if (l.nod) signals.push({ k: "nod", t: "Pre-foreclosure", p: 18 });
+    if (l.probate) signals.push({ k: "probate", t: "Probate", p: 14 });
+    if (l.vacant) signals.push({ k: "vacant", t: "Vacant", p: 10 });
+    if (absentee) signals.push({ k: "absentee", t: "Absentee owner", p: 6 });
+    if (yearsOwned != null && yearsOwned >= 15) signals.push({ k: "tenure", t: `Owned ${Math.floor(yearsOwned)} yrs`, p: 5 });
+    if (l.condition != null && l.condition <= 2) signals.push({ k: "cond", t: "Poor condition", p: 8 });
+    const distress = Math.min(55, signals.reduce((a, b) => a + b.p, 0));
+
+    const arv = l.arvIn ?? (l.sqft ? l.sqft * s.psf : null);
+    const cond = l.condition ?? 3;
+    let rehab = l.sqft ? l.sqft * s.rehab[cond] : null;
+    if (rehab != null && l.year && l.year < 1960) rehab *= 1.15;
+    const mao = arv != null && rehab != null ? arv * s.mao - rehab : null;
+    const costs = arv != null ? arv * s.cost : null;
+    const profit = mao != null ? arv - mao - rehab - costs : null;
+    const valueBase = l.assessed ?? arv;
+    const equityPct = valueBase ? (valueBase - l.mortgage) / valueBase : null;
+    const equityPts = equityPct == null ? 0 : Math.round(25 * Math.max(0, Math.min(1, equityPct / 0.6)));
+    // Feasibility: can the seller take the max offer and still clear the loan?
+    const cushion = mao != null && arv ? (mao - l.mortgage) / arv : null;
+    const feasPts = cushion == null ? 0 : Math.round(20 * Math.max(0, Math.min(1, cushion / 0.35)));
+    const total = Math.round(distress + equityPts + feasPts);
+    return { ...l, signals, absentee, yearsOwned, arv, arvEstimated: l.arvIn == null && arv != null, rehab, mao, costs, profit, equityPct, distress, equityPts, feasPts, cushion, score: total };
+  }
+  const band = (sc) => sc >= 80 ? ["strong", "Strong"] : sc >= 60 ? ["look", "Worth a look"] : ["pass", "Pass"];
+
+  // ---------- state ----------
+  let leads = [], scored = [], selected = null, datasetName = "Sample data";
+  const active = new Set();
+  try { const saved = JSON.parse(localStorage.getItem("ff-settings") || "null"); if (saved) for (const [id, v] of Object.entries(saved)) { const el = document.getElementById(id); if (el) el.value = v; } } catch {}
+
+  function load(text, name) { leads = toLeads(text); datasetName = name; selected = null; $("#brief").hidden = true; render(); }
+
+  function visible() {
+    const min = num($("#f-min").value) ?? 0, off = $("#f-offmarket").checked;
+    return scored.filter((l) => l.score >= min && (!off || !l.listed) && [...active].every((k) => l.signals.some((s) => s.k === k)));
+  }
+
+  function render() {
+    const s = S();
+    scored = leads.map((l) => score(l, s)).sort((a, b) => b.score - a.score);
+    const vis = visible();
+    $("#dataset-label").textContent = datasetName;
+    $("#st-leads").textContent = scored.length;
+    $("#st-leads-sub").textContent = `${vis.length} shown · ${scored.filter((l) => l.listed).length} listed on market`;
+    $("#st-strong").textContent = vis.filter((l) => l.score >= 80).length;
+    const sorted = vis.map((l) => l.score).sort((a, b) => a - b);
+    $("#st-median").textContent = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : 0;
+    $("#st-spread").textContent = kmoney(vis.slice(0, 10).reduce((a, l) => a + Math.max(0, l.profit ?? 0), 0));
+
+    $("#rows").innerHTML = vis.map((l) => {
+      const [cls] = band(l.score);
+      const tags = l.signals.filter((g) => !["tenure", "cond"].includes(g.k)).map((g) => `<span class="tag">${esc(g.t)}</span>`).join("")
+        + (l.listed ? `<span class="tag listed">Listed</span>` : "");
+      return `<tr data-id="${l.id}" tabindex="0" aria-selected="${selected === l.id}">
+        <td><span class="pill ${cls}">${l.score}</span></td>
+        <td><div class="addr">${esc(l.address)}</div><div class="small muted">${esc([l.city, l.zip].filter(Boolean).join(" "))}${l.sqft ? " · " + l.sqft.toLocaleString() + " sq ft" : ""}${l.year ? " · built " + l.year : ""}</div></td>
+        <td><div class="tags">${tags || '<span class="small muted">None</span>'}</div></td>
+        <td class="r figure">${kmoney(l.arv)}${l.arvEstimated ? "*" : ""}</td>
+        <td class="r figure">${kmoney(l.mao)}</td>
+        <td class="r figure">${l.equityPct == null ? "—" : Math.round(l.equityPct * 100) + "%"}</td></tr>`;
+    }).join("");
+    $("#empty").hidden = vis.length > 0;
+    if (selected == null || !vis.some((l) => l.id === selected)) selected = vis[0]?.id ?? null;
+    [...document.querySelectorAll("#rows tr")].forEach((tr) => tr.setAttribute("aria-selected", String(+tr.dataset.id === selected)));
+    renderDetail();
+  }
+
+  function renderDetail() {
+    const l = scored.find((x) => x.id === selected);
+    const d = $("#detail");
+    if (!l) { d.innerHTML = `<p class="muted" style="margin:0">Select a lead to see the deal math.</p>`; return; }
+    const [cls, word] = band(l.score);
+    const bar = (name, v, max) => `<div class="sb"><span class="muted">${name}</span><span class="track"><span class="fill" style="width:${(100 * v / max).toFixed(0)}%"></span></span><span class="figure" style="text-align:right">${v}/${max}</span></div>`;
+    d.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:start">
+        <div><h2>${esc(l.address)}</h2><div class="small muted">${esc([l.city, l.zip].filter(Boolean).join(" "))}${l.owner ? " · " + esc(l.owner) : ""}</div></div>
+        <div style="text-align:right"><span class="pill ${cls}" style="font-size:18px;padding:4px 14px">${l.score}</span><div class="small muted">${word}</div></div>
+      </div>
+      <div class="scorebars">${bar("Distress", Math.round(l.distress), 55)}${bar("Equity", l.equityPts, 25)}${bar("Deal room", l.feasPts, 20)}</div>
+      <div><h3>Distress signals</h3><div class="tags">${l.signals.map((g) => `<span class="tag">${esc(g.t)}</span>`).join("") || '<span class="small muted">None recorded</span>'}${l.listed ? '<span class="tag listed">Listed on MLS</span>' : ""}</div>
+        ${l.notes ? `<p class="small" style="margin:8px 0 0">${esc(l.notes)}</p>` : ""}</div>
+      <div><h3>Deal math</h3>
+        <dl class="math">
+          <dt>After-repair value${l.arvEstimated ? " (area $/sq ft estimate)" : ""}</dt><dd class="figure">${money(l.arv)}</dd>
+          <dt>Rehab estimate (condition ${l.condition ?? "3, assumed"})</dt><dd class="figure">${money(l.rehab)}</dd>
+          <dt>Max offer (${Math.round(S().mao * 100)}% of ARV − rehab)</dt><dd class="figure">${money(l.mao)}</dd>
+          <dt>Closing + holding</dt><dd class="figure">${money(l.costs)}</dd>
+          <dt class="sum">Projected profit at max offer</dt><dd class="figure sum ${l.profit > 0 ? "pos" : ""}">${money(l.profit)}</dd>
+          <dt>Mortgage balance</dt><dd class="figure">${money(l.mortgage)}</dd>
+          <dt>Owner equity</dt><dd class="figure">${l.equityPct == null ? "—" : Math.round(l.equityPct * 100) + "%"}</dd>
+        </dl>
+        ${l.mao != null && l.mao < l.mortgage ? `<p class="note" style="margin:8px 0 0">The max offer is below the loan balance. This only works as a short sale or subject-to deal.</p>` : ""}
+      </div>
+      <div class="bar"><button type="button" class="primary" id="btn-memo">AI deal memo</button><button type="button" id="btn-letter">AI outreach letter</button><button type="button" id="btn-stop" hidden>Stop</button></div>
+      <div class="ai-out" id="ai-out" hidden></div>`;
+    $("#btn-memo").onclick = () => askAI("memo", l);
+    $("#btn-letter").onclick = () => askAI("letter", l);
+    applyAIVisibility();
+  }
+
+  // ---------- AI ----------
+  let sample = null, ctl = null;
+  const aiFail = (code) => ({
+    not_granted: "Claude access was declined for this page, so AI features are off.",
+    sampling_disabled: "Claude is not available on this account.",
+    rate_limited: "Too many requests right now. Wait a minute and try again.",
+    session_expired: "Sign in to Claude again, then retry.",
+    refused: "Claude declined this request.",
+    invalid_json: "The answer came back in an unexpected format. Try again."
+  }[code] || "Claude could not answer. Try again.");
+  function applyAIVisibility() {
+    for (const id of ["#btn-memo", "#btn-letter", "#btn-brief"]) { const b = $(id); if (b) b.hidden = !sample; }
+  }
+  function leadFacts(l) {
+    return {
+      address: [l.address, l.city, l.zip].filter(Boolean).join(", "), sqft: l.sqft, beds: l.beds, baths: l.baths, year_built: l.year,
+      condition_1to5: l.condition, signals: l.signals.map((g) => g.t), listed_on_market: l.listed, owner_absentee: l.absentee,
+      arv: Math.round(l.arv ?? 0), arv_is_rough_estimate: l.arvEstimated, rehab_estimate: Math.round(l.rehab ?? 0), max_offer: Math.round(l.mao ?? 0),
+      projected_profit_at_max_offer: Math.round(l.profit ?? 0), mortgage_balance: l.mortgage, equity_pct: l.equityPct == null ? null : Math.round(l.equityPct * 100),
+      deal_score: l.score, notes: l.notes
+    };
+  }
+  async function run(out, prompt, opts = {}) {
+    ctl?.abort(); ctl = new AbortController();
+    const stop = $("#btn-stop"); if (stop) { stop.hidden = false; stop.onclick = () => ctl.abort(); }
+    out.hidden = false; out.textContent = "Thinking…";
+    document.querySelectorAll("#btn-memo,#btn-letter,#btn-brief").forEach((b) => b.disabled = true);
+    try {
+      const { truncated } = await sample(prompt, { ...opts, signal: ctl.signal, onText: ({ text }) => { out.textContent = text; } });
+      if (truncated) out.textContent += "\n\n(Answer was cut short.)";
+    } catch (e) {
+      out.textContent = e?.text ?? "";
+      if (e?.code !== "cancelled") out.textContent += (out.textContent ? "\n\n" : "") + aiFail(e?.code);
+      if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(e?.code)) { sample = null; applyAIVisibility(); }
+    } finally {
+      if (stop) stop.hidden = true;
+      document.querySelectorAll("#btn-memo,#btn-letter,#btn-brief").forEach((b) => b.disabled = false);
+    }
+  }
+  function askAI(kind, l) {
+    const facts = JSON.stringify(leadFacts(l), null, 1);
+    const prompt = kind === "memo"
+      ? `You are an experienced residential fix-and-flip acquisitions analyst. Write a concise deal memo for this off-market lead, using ONLY the data below (say when something is unknown; do not invent comps or facts).
+
+Sections, plain text with short headings:
+1. Verdict (one line: pursue / pursue with caution / pass, and why)
+2. Why the seller may be motivated (tie to the signals, factually and respectfully)
+3. Numbers check (ARV, rehab, max offer, profit; flag weak assumptions, e.g. an estimated ARV, pre-1960 systems, or a loan larger than the max offer)
+4. Exit options (flip, wholetail, wholesale assignment, subject-to or short sale if underwater)
+5. Next 5 steps to verify (comps, title/lien search, tax records, drive-by, inspection)
+6. Risks
+
+Under 350 words.
+
+Lead data (JSON):
+${facts}`
+      : `Write a short, respectful letter from a local home buyer to the owner of this property. It will be mailed. Rules: warm and plain, under 180 words; do NOT mention or hint at taxes owed, foreclosure, probate, death, code violations or any hardship (owners find that intrusive); offer a cash, as-is purchase on their timeline with no repairs or agent fees, and say there is no obligation; include placeholders [Your name], [Phone], [Email]; end with a line saying they can ask to be removed from the mailing list. Use the property address only. Output only the letter.
+
+Property: ${[l.address, l.city, l.zip].filter(Boolean).join(", ")}${l.vacant ? " (appears unoccupied; address it to the owner of record)" : ""}`;
+    run($("#ai-out"), prompt, { modelTier: kind === "memo" ? "default" : "quick" });
+  }
+  $("#btn-brief").onclick = () => {
+    const top = visible().slice(0, 10).map(leadFacts);
+    if (!top.length) return;
+    const prompt = `You are a fix-and-flip acquisitions lead. Below are my top ${top.length} scored off-market leads (JSON). In under 300 words of plain text: (1) name the 3 I should work first and why, (2) note any lead whose score looks misleading given its numbers, (3) one line on which outreach channel suits each of the top 3 (direct mail, door knock, probate attorney, etc.), keeping in mind do-not-call and TCPA rules. Use only this data; do not invent facts.
+
+${JSON.stringify(top)}`;
+    run($("#brief"), prompt, { modelTier: "default" });
+  };
+
+  (async () => {
+    try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+    applyAIVisibility();
+  })();
+  applyAIVisibility();
+
+  // ---------- events ----------
+  $("#rows").addEventListener("click", (e) => { const tr = e.target.closest("tr"); if (tr) { selected = +tr.dataset.id; render(); } });
+  $("#rows").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { const tr = e.target.closest("tr"); if (tr) { e.preventDefault(); selected = +tr.dataset.id; render(); document.querySelector(`#rows tr[data-id="${selected}"]`)?.focus(); } } });
+  document.querySelectorAll(".chip[data-sig]").forEach((b) => b.addEventListener("click", () => {
+    const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on));
+    on ? active.add(b.dataset.sig) : active.delete(b.dataset.sig); render();
+  }));
+  $("#f-min").addEventListener("input", render); $("#f-offmarket").addEventListener("change", render);
+  document.querySelectorAll(".settings input").forEach((el) => el.addEventListener("input", () => {
+    try { const o = {}; document.querySelectorAll(".settings input").forEach((i) => o[i.id] = i.value); localStorage.setItem("ff-settings", JSON.stringify(o)); } catch {}
+    render();
+  }));
+  const msg = (t) => { $("#import-msg").textContent = t; };
+  $("#file").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    try { load(await f.text(), f.name); msg(`Scored ${leads.length} leads from ${f.name}.`); } catch (err) { msg(err.message); }
+  });
+  $("#btn-paste").onclick = () => { try { load($("#paste").value, "Pasted leads"); msg(`Scored ${leads.length} leads.`); } catch (err) { msg(err.message); } };
+  $("#btn-sample").onclick = () => { load(SAMPLE, "Sample data"); msg("Sample data loaded. These are made-up properties."); };
+  $("#btn-template").onclick = async () => {
+    const t = SAMPLE.split("\n")[0];
+    try { await navigator.clipboard.writeText(t); msg("Template header copied."); }
+    catch { $("#paste").value = t + "\n"; $("#paste").select(); msg("Template header placed in the box below."); }
+  };
+  $("#btn-export").onclick = async () => {
+    const cols = ["score", "address", "city", "zip", "owner", "signals", "arv", "rehab", "max_offer", "projected_profit", "mortgage_balance", "equity_pct", "listed", "notes"];
+    const lines = [cols.join(",")].concat(visible().map((l) => [l.score, l.address, l.city, l.zip, l.owner, l.signals.map((g) => g.t).join("; "), Math.round(l.arv ?? 0), Math.round(l.rehab ?? 0), Math.round(l.mao ?? 0), Math.round(l.profit ?? 0), l.mortgage, l.equityPct == null ? "" : Math.round(l.equityPct * 100), l.listed ? "yes" : "no", l.notes].map(csvCell).join(",")));
+    const dl = await window.claude?.use?.("downloads").catch(() => null);
+    if (!dl) { $("#paste").value = lines.join("\n"); $("#import-panel").open = true; msg("Downloads are unavailable here; the ranked CSV is in the box above to copy."); return; }
+    try { await dl.save({ filename: "flipfinder-ranked-leads.csv", data: lines.join("\n") }); } catch (e) { if (e?.code !== "declined") msg("Could not save the file."); }
+  };
+
+  load(SAMPLE, "Sample data");
+})();
+</script>
