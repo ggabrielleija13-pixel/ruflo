@@ -1,0 +1,17 @@
+{
+  "name": "flipfinder-finder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pulls public code-violation and vacant-building records, groups them by property, and uses Claude to rank distressed off-market houses for FlipFinder.",
+  "type": "module",
+  "bin": { "flipfinder-find": "./find.mjs" },
+  "scripts": {
+    "find": "node find.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "zod": "^4.6.7"
+  }
+}
